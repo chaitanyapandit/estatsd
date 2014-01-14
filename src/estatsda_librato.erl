@@ -51,10 +51,9 @@ render_({Counters, Timers}) ->
   CountersMessage = render_counters_(Counters),
   TimersMessage = render_timers_(Timers),
   % Mochijson2 JSON struct
-  Term = {struct, [{gauges, CountersMessage ++ TimersMessage}]},
+  Term = [{gauges, CountersMessage ++ TimersMessage}],
   % Encode the final message
-  erlang:iolist_to_binary(mochijson2:encode(Term)).
-
+  jiffy:encode(pack_json(Term)).
 
 %% @doc Renders the counter metrics
 -spec render_counters_(prepared_counters()) -> JsonStruct::term().
@@ -140,3 +139,28 @@ send_(Message, #state{user = User, token = Token}) ->
   end.
 
 % ====================== /\ HELPER FUNCTIONS ===================================
+
+%%%===================================================================
+%%% JSON
+%%%===================================================================
+
+%% List of tuples, put in a document
+pack_json([{_,_}|_] = Doc) ->
+	{[pack_json(X) || X <- Doc]};
+%% List of lists, put in a list
+pack_json([H|T] = Doc) ->
+	[pack_json(X) || X <- Doc];
+%% Data types
+pack_json({K, V} = Pack) ->
+	{pack_json(K), pack_json(V)};
+pack_json(Other) ->
+	Other.
+%% Unpacking
+unpack_json({K, V}) ->
+	{unpack_json(K), unpack_json(V)};
+unpack_json({L}) when is_list(L) ->
+	[unpack_json(X) || X <- L];
+unpack_json(L) when is_list(L) ->
+	[unpack_json(X) || X <- L];
+unpack_json(Other) ->
+	Other.	
