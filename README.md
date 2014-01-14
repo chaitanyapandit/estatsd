@@ -1,4 +1,5 @@
 Rebarized version of https://github.com/wooga/estatsd/
+Uses [Jiffy](https://github.com/davisp/jiffy) instead of mochijson2
 
 estatsd
 =============
